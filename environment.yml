@@ -1,0 +1,14 @@
+# Local tooling for this fork: Node 22 (same as CI) and Yarn 4.13.0.
+# Yarn is pinned to 4.13.0, the newest version that leaves upstream's yarn.lock (format 8) and
+# .yarnrc.yml unchanged. 4.14+ migrates both. If upstream moves to a newer Yarn, update the pin.
+# The app's JavaScript packages are not listed here; `yarn install` puts them in node_modules/.
+#
+# Create the env inside the repo (envs/ is git-ignored):
+#   conda env create -f environment.yml -p ./envs/owb
+# Update it after editing this file:
+#   conda env update -f environment.yml -p ./envs/owb --prune
+channels:
+  - conda-forge
+dependencies:
+  - nodejs=22
+  - yarn=4.13.0

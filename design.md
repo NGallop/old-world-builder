@@ -1,11 +1,17 @@
 # Design: club-ready fork of Old World Builder
 
-**Status:** Agreed, final (revision 4). **Implementation has not started and starts only when the owner explicitly gives the go-ahead.**
+**Status:** Agreed, final (revision 5). **Implementation has not started and starts only when the owner explicitly gives the go-ahead.**
 **Owner:** NGallop
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-11
 
 **Revision history:**
 
+- **Revision 5:**
+  - Only the owner's repo is used. Upstream updates are pulled only on request, with GitHub's **Sync fork** (§12).
+  - PRs and issues always target `NGallop/old-world-builder` (§9).
+  - Phase 0 additions: the Help and Datasets links point to the fork, a `noindex` tag is added, and the old deploy and Sentry scripts are removed (§4.1).
+  - Local Node 22 and Yarn 4 come from a conda env kept in the repo under `envs/` (§15).
+  - GitHub setup is done, and Phase 0 goes on `claude/unit-profile-update` (§15).
 - **Revision 4:**
   - All questions decided (§13).
   - Back up / Restore all lists confirmed for Phase 0, kept simple.
@@ -37,6 +43,8 @@ This fork replaces old-world-builder.com for use at the club. There are two piec
 
 **Principle: a personal tool, kept simple.** This fork is mainly for the owner's own games, not a public or widely used product. Wherever there's a choice, take the simplest approach that works at the table. Features can be expanded later if other club members become interested.
 
+**Principle: only the owner's repo.** All work happens in `NGallop/old-world-builder`. Nothing is pushed, opened as a PR or reported as an issue on the original project (`nthiebes/old-world-builder`). Updates from it are pulled only when the owner asks (§12).
+
 **Goals**
 
 - **G1:** The fork is reachable from a phone at a stable URL and redeploys automatically when `main` changes.
@@ -46,7 +54,7 @@ This fork replaces old-world-builder.com for use at the club. There are two piec
 - **G5:** Every rule on a unit is visible on the card: a one-line summary by default, and the full rules text at the flick of a toggle. The full text is kept on the device once loaded.
 - **G6:** When the app can't work something out, the card says so instead of showing a wrong number, and you can override it.
 - **G7:** Wrong values are quick to report (GitHub issues) and fix.
-- **G8:** The fork stays easy to update from upstream, so dataset fixes keep flowing in.
+- **G8:** The fork stays easy to update from upstream when the owner asks, so dataset fixes can still come in.
 
 **Scope: Warriors of Chaos first**
 
@@ -96,7 +104,7 @@ Other armies come later (Phase 7), once Warriors of Chaos is working well at the
 
 The site will live at **`https://ngallop.github.io/old-world-builder/`**. Hosting is free, every push to `main` deploys automatically, and you can add it to your phone's home screen like an app. A custom domain can be added later without redoing anything.
 
-**Setup on GitHub (one-off, done by you).** These are settings on your fork, so they can't be done from code. Each takes a few clicks:
+**Setup on GitHub (one-off, done by you). Done (2026-11-11).** These are settings on your fork, so they can't be done from code. Each takes a few clicks:
 
 1. **Settings → Pages → Build and deployment → Source:** choose **GitHub Actions**.
 2. **Settings → General → Features:** tick **Issues**. They are off by default on forks, and bug reports need them (§9).
@@ -117,7 +125,13 @@ After the first deploy, the live URL is shown under **Settings → Pages**.
 | Remove Sentry | Otherwise your errors are reported to the upstream author's Sentry project | [index.jsx](src/index.jsx), [vite.config.js](vite.config.js) |
 | Remove Dropbox (§4.2) | It can't work on the fork | [App.jsx](src/App.jsx), [Header.jsx](src/components/page/Header.jsx) |
 | Add `.github/workflows/deploy.yml`: test, build, deploy to Pages | Automatic deploys on push to `main` | new file |
+| Remove the `deploy`, `predeploy` and `sentry:sourcemaps` scripts | Actions deploys now. `yarn deploy` would only push a stray `gh-pages` branch | [package.json](package.json) |
 | A small "fork" marker in the header or title | Avoids confusion with the official site | `index.html` / header |
+| Point the "report on GitHub" and "contribute datasets" links at `NGallop/old-world-builder` | Bug reports about the fork shouldn't go to the original author | [Help.jsx](src/pages/help/Help.jsx), [Datasets.jsx](src/pages/datasets/Datasets.jsx) |
+| Keep the credit link to the original project | The licence (CC BY 4.0) requires attribution | [About.jsx](src/pages/about/About.jsx), unchanged |
+| Add `<meta name="robots" content="noindex">` | Keeps the fork out of search results. `robots.txt` can't do this, because it only works at the domain root | [index.html](index.html) |
+
+**Public, but unlisted.** A fork of a public repo has to stay public on GitHub, and anyone with the Pages URL can open the site. That's fine for a personal tool: the site isn't linked from anywhere and isn't indexed.
 
 ### 4.2 Dropbox: removed
 
@@ -396,7 +410,9 @@ Most of these were answered by reading the rules index while writing this design
    - re-reads the source page
    - corrects the data entry or the calculation
    - adds the reported unit as a test case
-   - opens a PR that closes the issue
+   - opens a PR that closes the issue, on `NGallop/old-world-builder`
+
+   **PRs always target the fork.** On a fork, GitHub's "Compare & pull request" button sets the target to the original project by default, and `gh` can too. Run `gh repo set-default NGallop/old-world-builder` once, and pass `--repo NGallop/old-world-builder` on every `gh pr` and `gh issue` command. On the website, check that the base repository is `NGallop/old-world-builder` before creating a PR.
 3. **Deploy.** Merging the PR redeploys the site within a few minutes.
 
 ## 10. Delivery plan
@@ -405,7 +421,7 @@ Each phase is a separate PR into the fork's `main` and deploys automatically on 
 
 | Phase | Scope | Done when |
 | --- | --- | --- |
-| **0. Fork goes live** | GitHub setup (you, §4.1); hosting changes; Sentry and Dropbox removed; fork marker; Back up / Restore all lists | The fork opens on your phone at the URL, an imported list opens in the game view, and refreshing a deep link works |
+| **0. Fork goes live** | GitHub setup (done, §4.1); hosting changes; Sentry and Dropbox removed; old deploy scripts removed; fork marker; Help and Datasets links to the fork; `noindex`; Back up / Restore all lists | The fork opens on your phone at the URL, an imported list opens in the game view, and refreshing a deep link works |
 | **1. Extraction pipeline and saves** | Name collection, fetch and cache, and coverage scripts; `rules.json` save and Magic Resistance effects for Warriors of Chaos (Wolves of the Sea first); Sv / Ward / Regen / MR columns; breakdown line; `?` marker; override; ⚑ report link | Every Warriors of Chaos unit shows its saves (or `?`), and the tests pass |
 | **2. Rules on the card** | Summaries in `rules.json`; Rules section; full text kept on the device; toggles; saved-rules status | Every rule on a Warriors of Chaos card shows a summary, and full text after one visit with signal |
 | **3. Weapon profiles** | `weapons.json`; weapon table; "Other" line; Weapon profiles toggle | Every mundane weapon in the army shows a full profile |
@@ -430,8 +446,11 @@ Each phase is a separate PR into the fork's `main` and deploys automatically on 
 
 ## 12. Staying in sync with upstream
 
-- Add the original repo as a remote, then merge it in from time to time:
-  `git remote add upstream <original repo URL>`, then `git fetch upstream && git merge upstream/main`
+**Updates are pulled only when the owner asks.** The original project is `github.com/nthiebes/old-world-builder`. Pulling from it is read-only: nothing is ever sent back.
+
+- **No `upstream` remote is set up** in the local clone.
+- **To update:** on the fork's GitHub page, press **Sync fork → Update branch**. This merges the original project's `main` into the fork's `main`, which redeploys the site.
+- **If Sync fork reports conflicts:** never press **Discard commits**, because it deletes the fork's changes. Ask Claude instead. It fetches once, read-only, without adding a remote (`git fetch https://github.com/nthiebes/old-world-builder main`), merges `FETCH_HEAD` on a branch, resolves the conflicts, and opens a PR on `NGallop/old-world-builder`.
 - **Keep fork changes mostly in new files:** `combat-data/`, `combat-profile.js`, `rules-text-store.js`, `scripts/` and new game-view components. Edits to existing files stay small: `GameView.jsx`, `Stats.jsx`, `lists.js`, `Header.jsx`, `App.jsx` and the hosting files.
 - **Expect a trivial conflict on `package.json` `version`**, because upstream bumps it with dataset changes. Take upstream's value.
 - **Fork changes aren't added to the in-app Changelog.** This document and the PR descriptions record them.
@@ -458,30 +477,46 @@ All questions are decided. There are no open questions.
 | Q-B | Add Back up / Restore all lists in Settings, kept simple (§4.3) |
 | — | This is a personal tool: keep it simple, and expand only if other club members become interested |
 
+**Decided (2026-11-11)**
+
+| # | Decision |
+| --- | --- |
+| Q-C | Only the owner's repo is used. Upstream updates are pulled only on request, with Sync fork; Claude handles conflicts with a one-off read-only fetch (§12) |
+| Q-D | PRs and issues always target `NGallop/old-world-builder` (§9) |
+| Q-E | The GitHub setup in §4.1 is done (Pages source, Issues, Actions) |
+| Q-F | Phase 0 goes on branch `claude/unit-profile-update`. The owner decides how it reaches `main`, probably through `dev` |
+| Q-G | Node 22 and Yarn 4 come from a conda env in `envs/owb` inside the repo, defined by `environment.yml`, with `envs/` git-ignored (§15) |
+
 ## 14. Next step
 
 **Implementation starts only on the owner's explicit go-ahead.**
 
-- **Before then:** nothing is built or committed. The GitHub setup in §4.1 can be done at any time before Phase 0's first deploy.
-- **After the go-ahead:** work starts with Phase 0 (§10). Each phase is delivered as its own PR for review.
+- **Before then:** nothing is built or committed. The only exceptions are `environment.yml` and the `.gitignore` entry for `envs/`, which the owner asked for on 2026-11-11.
+- **After the go-ahead:** work starts with Phase 0 (§10) on `claude/unit-profile-update`. Each phase is delivered as its own PR on `NGallop/old-world-builder` for review.
 
 ## 15. Handover notes for the next session
 
-**Status (2026-11-10):**
+**Status (2026-11-11):**
 
-- The design is agreed and implementation has not started. Wait for the owner's explicit go-ahead.
-- This document is committed on branch `dev` (commit `0219a887`, "added design doc to cover proposed changes"), and `dev` is pushed to `origin`. `main` doesn't have it yet.
-- **Confirm with the owner** whether phase branches should come off `dev` or `main`. PRs target `main` (§10).
+- The design is agreed (revision 5) and implementation has not started. Wait for the owner's explicit go-ahead.
+- Revision 4 is committed as `b716b867` ("design agreed") on `dev` and `claude/unit-profile-update`. Revision 5, `environment.yml` and the `.gitignore` entry are not committed yet.
+- Phase 0 goes on `claude/unit-profile-update` (Q-F). The site deploys only when `main` changes.
+- The GitHub setup in §4.1 is done. Optional extra: Settings → Actions → General → Workflow permissions → read-only by default. The deploy workflow then declares only the permissions it needs (`pages: write`, `id-token: write`).
+- Only `NGallop/old-world-builder` is used (§2, §9, §12). Don't add an `upstream` remote.
 
-**Check with the owner before Phase 0:**
+**Node.js and Yarn (conda env inside the repo):**
 
-1. Is the GitHub setup in §4.1 done (Pages source, Issues, Actions enabled)? Also recommended: Settings → Actions → General → Workflow permissions → read-only by default. The deploy workflow then declares only the permissions it needs (`pages: write`, `id-token: write`).
-2. **Node.js:** `node`, `npm` and `yarn` were not on `PATH` in Claude's shell, and `node_modules` isn't installed, so `yarn test` and `yarn build` can't run yet. Ask how Node is installed (e.g. nvm, or Windows-side only under WSL), then run `yarn install` with the owner's approval. `python3` is available.
-3. **The upstream repository URL** for `git remote add upstream …`. Read it from the "forked from" line on the fork's GitHub page; don't guess it.
+- `environment.yml` defines Node 22 (the same version CI uses) and Yarn **4.13.0**, both from conda-forge. The owner creates the env at `./envs/owb`, which is git-ignored.
+- **Why Yarn 4.13.0 exactly:** it's the newest version that leaves upstream's `yarn.lock` (format 8) and `.yarnrc.yml` unchanged. Tested 2026-11-11: 4.12.0 and 4.13.0 change nothing. 4.14.1 bumps the lockfile to format 9, and 4.15.0 and later to format 10, and all of them add migration settings to `.yarnrc.yml`. If a later Sync fork brings in a newer lockfile format, move the pin to match.
+- **Phase 0:** the deploy workflow should also use Yarn 4.13.0. First check which Yarn the existing `ci.yml` actually gets on GitHub's runner.
+- **Claude's shell doesn't activate it.** Put it on `PATH` for each command, e.g. `PATH="$PWD/envs/owb/bin:$PATH" yarn test --run`. Because the env is inside the project, the sandbox can read it. Anything under the owner's home folder, including `~/miniforge3`, is hidden from Claude's shell. That's why earlier sessions reported Node as missing.
+- Install packages with `yarn install --immutable`, so `yarn.lock` is never rewritten.
+- If Vitest or the Vite dev server ever picks up files under `envs/`, add it to `test.exclude` / `server.watch.ignored` in [vite.config.js](vite.config.js).
 
 **Environment gotchas:**
 
-- **Untracked shell files:** `git status` inside Claude's sandbox shows `.bashrc` and `.bash_profile` as untracked. They are sandbox mounts of `/dev/null`, not real files. **Never use `git add -A` or `git add .`**; stage files by name.
+- **Untracked shell files:** `git status` inside Claude's sandbox shows `.bashrc`, `.bash_profile`, `.gitconfig`, `.gitmodules`, `.mcp.json`, `.profile`, `.ripgreprc`, `.vscode`, `.zprofile` and `.zshrc` as untracked. They are sandbox mounts, not real files. **Never use `git add -A` or `git add .`**; stage files by name.
+- **`gh`** isn't available in Claude's shell. Check before relying on it for PRs and issues, and always pass `--repo NGallop/old-world-builder` (§9).
 - **Fetching the rules index:** the Bash sandbox blocks tow.whfb.app. Fetches need to run outside the sandbox, which prompts the owner for approval. Keep to no more than one request per second and cache results in the git-ignored `.cache/rules-index/`.
 - **Rules index URLs** come from `rules-index-export.json` plus `rules-map.js`. Some pages are client-rendered and return only "Loading…". Usually the faction-specific URL works instead, e.g. `special-rules/chaos-armour-warriors-of-chaos`, not `special-rules/chaos-armour`.
 - **Text extraction:** strip `<script>`, `<style>`, `<nav>` and `<footer>`, then take the lines between `Last update:` and `Cross-Reference`.
