@@ -464,3 +464,45 @@ All questions are decided. There are no open questions.
 
 - **Before then:** nothing is built or committed. The GitHub setup in §4.1 can be done at any time before Phase 0's first deploy.
 - **After the go-ahead:** work starts with Phase 0 (§10). Each phase is delivered as its own PR for review.
+
+## 15. Handover notes for the next session
+
+**Status (2026-11-10):**
+
+- The design is agreed and implementation has not started. Wait for the owner's explicit go-ahead.
+- This document is committed on branch `dev` (commit `0219a887`, "added design doc to cover proposed changes"), and `dev` is pushed to `origin`. `main` doesn't have it yet.
+- **Confirm with the owner** whether phase branches should come off `dev` or `main`. PRs target `main` (§10).
+
+**Check with the owner before Phase 0:**
+
+1. Is the GitHub setup in §4.1 done (Pages source, Issues, Actions enabled)? Also recommended: Settings → Actions → General → Workflow permissions → read-only by default. The deploy workflow then declares only the permissions it needs (`pages: write`, `id-token: write`).
+2. **Node.js:** `node`, `npm` and `yarn` were not on `PATH` in Claude's shell, and `node_modules` isn't installed, so `yarn test` and `yarn build` can't run yet. Ask how Node is installed (e.g. nvm, or Windows-side only under WSL), then run `yarn install` with the owner's approval. `python3` is available.
+3. **The upstream repository URL** for `git remote add upstream …`. Read it from the "forked from" line on the fork's GitHub page; don't guess it.
+
+**Environment gotchas:**
+
+- **Untracked shell files:** `git status` inside Claude's sandbox shows `.bashrc` and `.bash_profile` as untracked. They are sandbox mounts of `/dev/null`, not real files. **Never use `git add -A` or `git add .`**; stage files by name.
+- **Fetching the rules index:** the Bash sandbox blocks tow.whfb.app. Fetches need to run outside the sandbox, which prompts the owner for approval. Keep to no more than one request per second and cache results in the git-ignored `.cache/rules-index/`.
+- **Rules index URLs** come from `rules-index-export.json` plus `rules-map.js`. Some pages are client-rendered and return only "Loading…". Usually the faction-specific URL works instead, e.g. `special-rules/chaos-armour-warriors-of-chaos`, not `special-rules/chaos-armour`.
+- **Text extraction:** strip `<script>`, `<style>`, `<nav>` and `<footer>`, then take the lines between `Last update:` and `Cross-Reference`.
+- **Index of magic-phase rule pages:** `magic/spells-and-spell-generation-magic`.
+
+**Code pointers:**
+
+| What | Where |
+| --- | --- |
+| Unit card rendering | `getSection()` in [GameView.jsx](src/pages/game-view/GameView.jsx) |
+| Game-view filter toggles | `filters` array in the same file |
+| Active-kit filtering to reuse | `getAllOptions()` in [unit.jsx](src/utils/unit.jsx) |
+| Stat lines | `getStats()` in [unit.jsx](src/utils/unit.jsx) |
+| Wizard level | `getUnitWizardryLevel()` in [unit.jsx](src/utils/unit.jsx) |
+| Name normalisation | `normalizeRuleName()` in [string.js](src/utils/string.js); note it strips bracketed parameters |
+| Name → URL mapping | `rulesMap` and `synonyms` in [rules-map.js](src/components/rules-index/rules-map.js) |
+| Persisted unit fields | `editUnit` whitelist in [lists.js](src/state/lists.js); add `combatOverrides` there |
+| Existing rules-text fetcher | [rule-descriptions.js](src/utils/rule-descriptions.js), used by the Print page |
+| Spell selection UI | [GeneratedSpells.jsx](src/components/generated-spells/GeneratedSpells.jsx) |
+| Spell lists (no casting values) | [lores-of-magic-with-spells.json](src/assets/lores-of-magic-with-spells.json) |
+| Dropbox UI to remove | [Header.jsx](src/components/page/Header.jsx), and `useDropboxAuthentication()` in [App.jsx](src/App.jsx) |
+| Existing single-list JSON export/import | [Export.jsx](src/pages/export/Export.jsx) (`getFile`), [Import.jsx](src/pages/import/Import.jsx) |
+
+**Facts already verified against the rules index** are in §8 (R1, R2, R4, R6, R10 and R13–R16, plus Talisman of Protection and Fireball). Don't re-derive them.
